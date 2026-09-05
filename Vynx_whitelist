@@ -9,4 +9,65 @@
 
 ]]--
 
-local v0=game:GetService("Players").LocalPlayer;local v1=game:GetService("HttpService");local v2=game:GetService("RbxAnalyticsService");local v3=tostring(v0.UserId);local function v4() local v8=nil;pcall(function() if gethwid then v8=gethwid();elseif get_hwid then v8=get_hwid();elseif getdeviceid then v8=getdeviceid();elseif get_device_id then v8=get_device_id();else v8=v2:GetClientId();end end);return tostring(v8 or "UNKNOWN_HWID" );end local v5=v4();local v6="https://raw.githubusercontent.com/VIPER2X2HUB/whitelist.txt2/refs/heads/main/whitelist?v="   .. math.floor(tick()) ;local v7="https://raw.githubusercontent.com/Adhamgames2/Vynx-/refs/heads/main/Vynx_HUB";task.spawn(function() local v9,v10=pcall(function() return game:HttpGet(v6);end);if (v9 and v10) then local v11,v12=pcall(function() return v1:JSONDecode(v10);end);if (v11 and v12 and v12[v3]) then local v13=v12[v3];if (v13.enabled==true) then if (v13.hwid==v5) then local v14,v15=pcall(function() return game:HttpGet(v7);end);if (v14 and v15) then local v16,v17=loadstring(v15);if v16 then v16();else warn("[VYNX ERROR] خطأ برمجي في السكربت الرئيسي: "   .. tostring(v17) );end else warn("[VYNX HUB] تعذر جلب السكربت الرئيسي من GitHub!");end else v0:Kick("\n\n[ VYNX HUB - SECURITY LOCK ]\n\n❌ هذا الحساب مفعل على جهاز آخر!\n\nHWID الخاص بك:\n"   .. v5 );end else v0:Kick("\n\n[ VYNX HUB ]\n\n❌ تم إيقاف تفعيل حسابك!");end else v0:Kick("\n\n[ VYNX HUB ]\n\n❌ حسابك غير مفعل!\n\nUserId: "   .. v3   .. "\nHWID: "   .. v5 );end else v0:Kick("\n\n[ VYNX HUB ]\n\n❌ تعذر الاتصال بسيرفر التفعيل!");end end);
+local P = game:GetService("Players").LocalPlayer;
+local HttpService = game:GetService("HttpService");
+local RbxAnalytics = game:GetService("RbxAnalyticsService");
+local UserId = tostring(P.UserId);
+local function GetDeviceID()
+	local hwid = nil;
+	pcall(function()
+		if gethwid then
+			hwid = gethwid();
+		elseif get_hwid then
+			hwid = get_hwid();
+		elseif getdeviceid then
+			hwid = getdeviceid();
+		elseif get_device_id then
+			hwid = get_device_id();
+		else
+			hwid = RbxAnalytics:GetClientId();
+		end
+	end);
+	return tostring(hwid or "UNKNOWN_HWID");
+end
+local CurrentHWID = GetDeviceID();
+local WhitelistURL = "https://raw.githubusercontent.com/VIPER2X2HUB/whitelist.txt2/refs/heads/main/whitelist?v=" .. math.floor(tick());
+local ScriptURL = "https://raw.githubusercontent.com/Adhamgames2/Vynx-/refs/heads/main/Vynx_HUB";
+task.spawn(function()
+	local ok, rawData = pcall(function()
+		return game:HttpGet(WhitelistURL);
+	end);
+	if (ok and rawData) then
+		local success, whitelist = pcall(function()
+			return HttpService:JSONDecode(rawData);
+		end);
+		if (success and whitelist and whitelist[UserId]) then
+			local userData = whitelist[UserId];
+			if (userData.enabled == true) then
+				if (userData.hwid == CurrentHWID) then
+					local sOk, scriptContent = pcall(function()
+						return game:HttpGet(ScriptURL);
+					end);
+					if (sOk and scriptContent) then
+						local func, loadError = loadstring(scriptContent);
+						if func then
+							func();
+						else
+							warn("[VYNX ERROR] خطأ برمجي في السكربت الرئيسي: " .. tostring(loadError));
+						end
+					else
+						warn("[VYNX HUB] تعذر جلب السكربت الرئيسي من GitHub!");
+					end
+				else
+					P:Kick("\n\n[ VYNX HUB - SECURITY LOCK ]\n\n❌ هذا الحساب مفعل على جهاز آخر!\n\nHWID الخاص بك:\n" .. CurrentHWID);
+				end
+			else
+				P:Kick("\n\n[ VYNX HUB ]\n\n❌ تم إيقاف تفعيل حسابك!");
+			end
+		else
+			P:Kick("\n\n[ VYNX HUB ]\n\n❌ حسابك غير مفعل!\n\nUserId: " .. UserId .. "\nHWID: " .. CurrentHWID);
+		end
+	else
+		P:Kick("\n\n[ VYNX HUB ]\n\n❌ تعذر الاتصال بسيرفر التفعيل!");
+	end
+end);
