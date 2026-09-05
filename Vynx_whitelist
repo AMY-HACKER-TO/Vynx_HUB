@@ -1,0 +1,73 @@
+local P = game:GetService("Players").LocalPlayer
+local HttpService = game:GetService("HttpService")
+local RbxAnalytics = game:GetService("RbxAnalyticsService")
+
+local UserId = tostring(P.UserId)
+
+-- جلب بصمة الجهاز (HWID)
+local function GetDeviceID()
+    local hwid = nil
+    pcall(function()
+        if gethwid then
+            hwid = gethwid()
+        elseif get_hwid then
+            hwid = get_hwid()
+        elseif getdeviceid then
+            hwid = getdeviceid()
+        elseif get_device_id then
+            hwid = get_device_id()
+        else
+            hwid = RbxAnalytics:GetClientId()
+        end
+    end)
+    return tostring(hwid or "UNKNOWN_HWID")
+end
+
+local CurrentHWID = GetDeviceID()
+
+local WhitelistURL = "https://raw.githubusercontent.com/VIPER2X2HUB/whitelist.txt2/refs/heads/main/whitelist?v=" .. math.floor(tick())
+local ScriptURL = "https://raw.githubusercontent.com/Adhamgames2/Vynx-/refs/heads/main/Vynx_HUB"
+
+task.spawn(function()
+    local ok, rawData = pcall(function() 
+        return game:HttpGet(WhitelistURL) 
+    end)
+
+    if ok and rawData then
+        local success, whitelist = pcall(function() 
+            return HttpService:JSONDecode(rawData) 
+        end)
+        
+        if success and whitelist and whitelist[UserId] then
+            local userData = whitelist[UserId]
+            
+            -- التحقق من حالة التفعيل وبصمة الجهاز
+            if userData.enabled == true then
+                if userData.hwid == CurrentHWID then
+                    local sOk, scriptContent = pcall(function() 
+                        return game:HttpGet(ScriptURL) 
+                    end)
+                    
+                    if sOk and scriptContent then
+                        local func, loadError = loadstring(scriptContent)
+                        if func then
+                            func()
+                        else
+                            warn("[VYNX ERROR] خطأ برمجي في السكربت الرئيسي: " .. tostring(loadError))
+                        end
+                    else
+                        warn("[VYNX HUB] تعذر جلب السكربت الرئيسي من GitHub!")
+                    end
+                else
+                    P:Kick("\n\n[ VYNX HUB - SECURITY LOCK ]\n\n❌ هذا الحساب مفعل على جهاز آخر!\n\nHWID الخاص بك:\n" .. CurrentHWID)
+                end
+            else
+                P:Kick("\n\n[ VYNX HUB ]\n\n❌ تم إيقاف تفعيل حسابك!")
+            end
+        else
+            P:Kick("\n\n[ VYNX HUB ]\n\n❌ حسابك غير مفعل!\n\nUserId: " .. UserId .. "\nHWID: " .. CurrentHWID)
+        end
+    else
+        P:Kick("\n\n[ VYNX HUB ]\n\n❌ تعذر الاتصال بسيرفر التفعيل!")
+    end
+end)
